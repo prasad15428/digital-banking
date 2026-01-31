@@ -44,15 +44,6 @@ public class User {
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-    
-    @Column(name = "is_active")
-    private Boolean isActive = true;
-    
-    @Column(name = "failed_login_attempts")
-    private Integer failedLoginAttempts = 0;
-    
-    @Column(name = "is_locked")
-    private Boolean isLocked = false;
 
     // Constructors
     public User() {
@@ -124,30 +115,6 @@ public class User {
         this.createdAt = createdAt;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean active) {
-        isActive = active;
-    }
-
-    public Integer getFailedLoginAttempts() {
-        return failedLoginAttempts;
-    }
-
-    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
-        this.failedLoginAttempts = failedLoginAttempts;
-    }
-
-    public Boolean getIsLocked() {
-        return isLocked;
-    }
-
-    public void setIsLocked(Boolean locked) {
-        isLocked = locked;
-    }
-
     @Override
     public String toString() {
         return "User{" +
@@ -155,8 +122,8 @@ public class User {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
-                ", isActive=" + isActive +
-                ", isLocked=" + isLocked +
+                ", address='" + address + '\'' +
+                ", createdAt=" + createdAt +
                 '}';
     }
 }

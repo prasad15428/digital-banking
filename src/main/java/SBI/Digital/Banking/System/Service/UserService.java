@@ -1,48 +1,24 @@
 package SBI.Digital.Banking.System.Service;
 
-import SBI.Digital.Banking.System.DTO.RegistrationRequestDTO;
-import SBI.Digital.Banking.System.DTO.RegistrationResponseDTO;
-import SBI.Digital.Banking.System.Entity.User;
-import SBI.Digital.Banking.System.Exceptions.InvalidPasswordException;
-import SBI.Digital.Banking.System.Exceptions.PasswordMismatchException;
-import SBI.Digital.Banking.System.Exceptions.UserAlreadyExistsException;
-import SBI.Digital.Banking.System.Repository.UserRepository;
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import SBI.Digital.Banking.System.DTO.RegistrationRequestDTO;
+import SBI.Digital.Banking.System.DTO.RegistrationResponseDTO;
+import SBI.Digital.Banking.System.DTO.UpdateUserRequestDTO;
+import SBI.Digital.Banking.System.Entity.User;
+import SBI.Digital.Banking.System.Exceptions.PasswordMismatchException;
+import SBI.Digital.Banking.System.Exceptions.UserAlreadyExistsException;
+import SBI.Digital.Banking.System.Repository.UserRepository;
 
 @Service
 public class UserService {
     
     @Autowired
     private UserRepository userRepository;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    
-    /**
-     * Validate password strength
-     * Password must contain:
-     * - Minimum 8 characters
-     * - At least one uppercase letter
-     * - At least one number
-     * - At least one special character
-     * 
-     * @param password the password to validate
-     * @throws InvalidPasswordException if password doesn't meet criteria
-     */
-    private void validatePasswordStrength(String password) {
-        String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$";
-        
-        if (!password.matches(passwordRegex)) {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters and contain an uppercase letter, a number, and a special character"
-            );
-        }
-    }
     
     /**
      * Register a new user
@@ -51,7 +27,6 @@ public class UserService {
      * @return RegistrationResponseDTO with success message
      * @throws UserAlreadyExistsException if email already exists
      * @throws PasswordMismatchException if passwords don't match
-     * @throws InvalidPasswordException if password doesn't meet strength criteria
      */
     @Transactional
     public RegistrationResponseDTO registerUser(RegistrationRequestDTO registrationRequest) {
@@ -68,24 +43,14 @@ public class UserService {
             throw new PasswordMismatchException("Passwords do not match");
         }
         
-        // Validate password strength
-        validatePasswordStrength(registrationRequest.getPassword());
-        
         // Create new user
         User user = new User();
         user.setName(registrationRequest.getName());
         user.setEmail(registrationRequest.getEmail());
         user.setPhone(registrationRequest.getPhone());
         user.setAddress(registrationRequest.getAddress());
-        
-        // Encrypt password
-        user.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
-        
-        // Set metadata
+        user.setPassword(registrationRequest.getPassword());
         user.setCreatedAt(LocalDateTime.now());
-        user.setIsActive(true);
-        user.setFailedLoginAttempts(0);
-        user.setIsLocked(false);
         
         // Save user to database
         User savedUser = userRepository.save(user);
@@ -120,5 +85,58 @@ public class UserService {
     public User findById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+    
+    /**
+     * Update user profile (full update)
+     * 
+     * @param id the user ID to update
+     * @param updateRequest the update request with new details
+     * @return updated User
+     * @throws RuntimeException if user not found
+     * @throws UserAlreadyExistsException if email already exists for another user
+     */
+    @Transactional
+    public User updateUser(Long id, UpdateUserRequestDTO updateRequest) {
+        User user = findById(id);
+        
+        // Check if email is being changed and if it already exists
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            if (userRepository.existsByEmail(updateRequest.getEmail())) {
+                throw new UserAlreadyExistsException(
+                    "Email '" + updateRequest.getEmail() + "' is already in use"
+                );
+            }
+        }
+        
+        // Update all fields if provided
+        if (updateRequest.getName() != null) {
+            user.setName(updateRequest.getName());
+        }
+        if (updateRequest.getEmail() != null) {
+            user.setEmail(updateRequest.getEmail());
+        }
+        if (updateRequest.getPhone() != null) {
+            user.setPhone(updateRequest.getPhone());
+        }
+        if (updateRequest.getAddress() != null) {
+            user.setAddress(updateRequest.getAddress());
+        }
+        
+        return userRepository.save(user);
+    }
+    
+    /**
+     * Partial update user profile (update only provided fields)
+     * 
+     * @param id the user ID to update
+     * @param updateRequest the update request with fields to update
+     * @return updated User
+     * @throws RuntimeException if user not found
+     * @throws UserAlreadyExistsException if email already exists for another user
+     */
+    @Transactional
+    public User updateUserPartial(Long id, UpdateUserRequestDTO updateRequest) {
+        return updateUser(id, updateRequest);
     }
 }
