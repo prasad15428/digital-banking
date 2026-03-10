@@ -30,6 +30,7 @@ public class UserService {
      */
     @Transactional
     public RegistrationResponseDTO registerUser(RegistrationRequestDTO registrationRequest) {
+        System.out.println("Durga Prasad");
         
         // Check if email already exists
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
