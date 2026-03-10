@@ -32,6 +32,7 @@ public class UserService {
     public RegistrationResponseDTO registerUser(RegistrationRequestDTO registrationRequest) {
         System.out.println("Durga Prasad");
         System.out.println("Hello ");
+        System.out.println("New branch was added into the class");
         
         // Check if email already exists
         if (userRepository.existsByEmail(registrationRequest.getEmail())) {
